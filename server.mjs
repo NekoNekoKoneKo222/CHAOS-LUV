@@ -2,7 +2,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createReadStream, existsSync, statSync } from 'node:fs';
-import { WebSocketServer, WebSocket } from 'ws';
+import WebSocket, { WebSocketServer } from 'ws';
 import * as RAPIER from '@dimforge/rapier3d-compat';
 import { cleanName, roomCode, clamp, safeNumber, sanitizeColor, buildPartData, withinDistance } from './shared/rules.mjs';
 
