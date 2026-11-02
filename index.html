@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#17253b" />
+  <meta name="description" content="CHAOS-LUV - 友達と発明する3Dオンライン物理サンドボックスゲーム" />
+  <title>CHAOS-LUV | Physics Sandbox</title>
+</head>
+<body>
+  <canvas id="gameCanvas" aria-label="3Dゲーム画面"></canvas>
+  <div class="ambient"></div>
+  <main id="welcomeScreen" class="welcome">
+    <div class="welcomePanel">
+      <div class="logoIcon">✳</div>
+      <div class="eyebrow">MULTIPLAYER PHYSICS PLAYGROUND</div>
+      <h1>CHAOS<span>·</span>LUV</h1>
+      <p class="subtitle">つくって、つなげて、ぶっ飛ばそう。<br />友達と遊ぶ、自由な物理サンドボックス。</p>
+      <div class="welcomeFields">
+        <label>プレイヤー名<input id="nameInput" maxlength="18" autocomplete="nickname" placeholder="プレイヤー名" value="Builder" /></label>
+        <label>テーマカラー<input id="playerColor" type="color" value="#72dcff" /></label>
+      </div>
+      <button id="createRoom" class="btn primary large">＋ 新しいワールドを作る</button>
+      <div class="joinRow"><input id="roomInput" maxlength="6" placeholder="6文字のルームコード" autocapitalize="characters" /><button id="joinRoom" class="btn secondary">参加する</button></div>
+      <p class="welcomeTip">PC・iPad対応 / ダウンロード不要 / 友達をコードで招待</p>
+      <div class="features"><span>立体物理</span><span>機械・回路</span><span>NPC</span><span>セーブ</span></div>
+      <div id="welcomeError" role="alert"></div>
+    </div>
+    <div class="welcomeArt"><div class="floatingA">⚙</div><div class="floatingB">⬡</div><div class="floatingC">✦</div></div>
+  </main>
+  <div id="gameUI" class="hidden">
+    <header class="topbar">
+      <div class="brand">✳ <span>CHAOS·LUV</span></div>
+      <div class="roomPill"><span class="dot"></span> ROOM <b id="roomCode">------</b><button id="copyInvite" title="招待URLをコピー">⧉</button></div>
+      <div class="topStats"><span id="playerCount">1 / 8 人</span><span id="partsCount">0 PARTS</span><span id="fps">60 FPS</span></div>
+      <button id="helpBtn" class="iconBtn" title="遊び方">?</button>
+    </header>
+    <aside id="sidebar" class="sidebar">
+      <div class="sideHeader"><div><small>WORKSHOP</small><h2>ツールボックス</h2></div><button id="collapseSidebar" title="パネルを開閉">☰</button></div>
+      <div class="tabs" role="tablist">
+        <button data-tab="build" class="tab active">建築</button>
+        <button data-tab="tools" class="tab">編集</button>
+        <button data-tab="logic" class="tab">機械</button>
+        <button data-tab="npc" class="tab">NPC</button>
+        <button data-tab="world" class="tab">世界</button>
+      </div>
+      <div class="tabBody">
+        <section id="tab-build" class="tabPanel active">
+          <div class="sectionTitle">オブジェクト</div>
+          <div class="shapeRow"><button class="shape active" data-shape="box">▣<small>ブロック</small></button><button class="shape" data-shape="sphere">●<small>球</small></button><button class="shape" data-shape="cylinder">◉<small>円柱</small></button></div>
+          <label class="field">種類<select id="partKind"><option value="block">通常ブロック</option><option value="motor">モーターパーツ</option><option value="piston">ピストンパーツ</option><option value="sensor">近接センサー</option><option value="switch">スイッチ</option><option value="seat">座席（NPC用）</option></select></label>
+          <label class="field">素材<select id="material"><option value="wood">木材</option><option value="metal">金属</option><option value="rubber">ゴム</option><option value="ice">氷</option></select></label>
+          <label class="field">色<input id="partColor" type="color" value="#68d8fd" /></label>
+          <label class="field">大きさ <output id="sizeLabel">1.5</output><input id="partSize" type="range" min=".4" max="5" step=".1" value="1.5" /></label>
+          <label class="checkline"><input id="spawnLocked" type="checkbox" /> 固定して設置する</label>
+          <button id="placeBtn" class="btn primary full">＋ 目の前に設置</button>
+          <p class="hint">オブジェクトをタップして選択。空いた場所をドラッグすると視点が回転します。</p>
+        </section>
+        <section id="tab-tools" class="tabPanel">
+          <div class="sectionTitle">編集モード</div>
+          <div class="modeGrid"><button class="modeBtn active" data-mode="select">↖ 選択</button><button class="modeBtn" data-mode="move">✥ 移動</button><button class="modeBtn" data-mode="draw">✎ 線を描く</button></div>
+          <label class="checkline"><input id="multiSelect" type="checkbox" /> 複数選択・グループ化</label>
+          <label class="checkline"><input id="softStroke" type="checkbox" /> 柔らかい線（ロープ風）</label>
+          <div class="selectInfo" id="selectInfo">オブジェクト未選択</div>
+          <div class="actionGrid"><button id="lockBtn" class="btn secondary">固定 / 解除</button><button id="deleteBtn" class="btn danger">削除</button><button id="groupBtn" class="btn secondary">グループ化</button><button id="selectGroupBtn" class="btn secondary">同じグループを選択</button></div>
+          <div class="sectionTitle">グループの移動</div>
+          <div class="nudgeRow"><button data-nudge="-1,0">←</button><button data-nudge="0,-1">↑</button><button data-nudge="0,1">↓</button><button data-nudge="1,0">→</button></div>
+          <p class="hint">PC: Shift+クリックで複数選択。iPad: 複数選択をONにしてタップ。</p>
+        </section>
+        <section id="tab-logic" class="tabPanel">
+          <div class="sectionTitle">接続・動力</div>
+          <p class="hint">接続したいパーツを2つ選択してから実行。</p>
+          <label class="field">接続方式<select id="jointType"><option value="fixed">固定</option><option value="hinge">ヒンジ</option><option value="motor">モーター</option><option value="piston">ピストン</option><option value="rope">ロープ</option><option value="spring">バネ</option></select></label>
+          <label class="field">モーター速度 <output id="speedLabel">2</output><input id="motorSpeed" type="range" min="-20" max="20" value="2" step="1" /></label>
+          <button id="jointBtn" class="btn primary full">⚙ 2つを接続</button>
+          <div class="sectionTitle">回路</div>
+          <p class="hint">センサー / スイッチからモーター / ピストンへ信号を送ります。</p>
+          <button id="wireBtn" class="btn secondary full">⚡ 信号線を接続</button>
+          <button id="toggleSwitchBtn" class="btn secondary full">スイッチON/OFF</button>
+          <p class="hint">センサーは4m以内のプレイヤーを検知します。駆動用ジョイントをつないだ部品に信号を渡してください。</p>
+        </section>
+        <section id="tab-npc" class="tabPanel">
+          <div class="sectionTitle">NPCを作る</div>
+          <label class="field">名前<input id="npcName" maxlength="18" value="ロボット" /></label>
+          <label class="field">行動<select id="npcMode"><option value="wander">自由に歩く</option><option value="follow">プレイヤーについてくる</option><option value="work">作業対象へ向かう</option><option value="ride">近くの座席に乗る</option><option value="idle">待機する</option></select></label>
+          <button id="spawnNpcBtn" class="btn primary full">＋ NPCを配置</button>
+          <div class="sectionTitle">ワールドのNPC <span id="npcCount">0 / 16</span></div>
+          <div id="npcList" class="npcList"><p class="hint">まだNPCはいません。</p></div>
+          <p class="hint">NPCの移動・追従・座席使用・作業地点への移動は試作AIです。</p>
+        </section>
+        <section id="tab-world" class="tabPanel">
+          <div class="sectionTitle">ワールド設定</div>
+          <label class="field">重力 <output id="gravityLabel">-9.8</output><input id="gravity" type="range" min="-25" max="5" step=".5" value="-9.8" /></label>
+          <button id="pauseBtn" class="btn secondary full">⏸ 物理を一時停止</button>
+          <div class="sectionTitle">セーブ &amp; ロード</div>
+          <button id="saveLocalBtn" class="btn primary full">ワールドを端末に保存</button>
+          <button id="loadLocalBtn" class="btn secondary full">この端末の保存を読み込む</button>
+          <button id="exportBtn" class="btn secondary full">JSONファイルをダウンロード</button>
+          <label class="btn secondary full filePick">JSONファイルを読み込む<input type="file" accept=".json,application/json" id="importFile" hidden /></label>
+          <div class="sectionTitle">設計図</div>
+          <label class="field">設計図名<input id="blueprintName" value="My Machine" maxlength="36" /></label>
+          <button id="saveBlueprintBtn" class="btn secondary full">選択物を設計図に保存</button>
+          <select id="blueprintList" class="full"><option value="">保存済み設計図なし</option></select>
+          <button id="pasteBlueprintBtn" class="btn secondary full">設計図を目の前に配置</button>
+          <div class="sectionTitle">危険な操作</div>
+          <button id="clearWorldBtn" class="btn danger full">ワールドを初期化</button>
+          <p class="hint">サーバー再起動時にオンライン世界はリセットされます。ホスト端末のローカル保存やJSONで復元できます。</p>
+        </section>
+      </div>
+      <div class="sidebarFoot"><span class="pulse"></span><span id="connectionText">接続中...</span></div>
+    </aside>
+    <div id="centerHint" class="centerHint">WASD: 移動 · クリック: 選択 · ドラッグ: 視点移動</div>
+    <aside id="chatBox" class="chatBox">
+      <div id="messages" class="messages"></div>
+      <form id="chatForm"><input id="chatInput" maxlength="130" autocomplete="off" placeholder="メッセージを入力..." /><button type="submit" aria-label="送信">➤</button></form>
+    </aside>
+    <div id="mobileControls" class="mobileControls">
+      <div id="joystick" class="joystick"><div id="stick" class="stick"></div></div>
+      <button id="jumpBtn" class="jumpBtn">JUMP</button>
+    </div>
+    <div id="toast" class="toast"></div>
+    <div id="helpModal" class="modal hidden">
+      <div class="modalCard"><button id="closeHelp" class="modalClose">✕</button><h2>CHAOS·LUV 遊び方</h2>
+        <p>自由に作って実験する3Dサンドボックス。友達にルームURLを共有して一緒に建築できます。</p>
+        <ul><li>PC: WASDで移動、Spaceでジャンプ、ドラッグで視点を回転。</li>
+        <li>iPad: 左下の仮想スティック、右側スワイプで視点移動。</li>
+        <li>建築から部品を置き、編集で選択・移動・削除・線を描く。</li>
+        <li>機械では2つの部品を選んでヒンジ・モーター・ロープで接続。</li>
+        <li>スイッチ / センサーとモーター部品を信号線でつなぐ。</li>
+        <li>NPCの行動を選び、作った座席を使わせよう。</li>
+        <li>ワールド設定から保存・JSONエクスポートが可能。</li></ul>
+        <button id="helpOkay" class="btn primary full">遊びはじめる</button>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
