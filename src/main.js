@@ -1,7 +1,14 @@
 import './style.css';
 import { GameWorld } from './world.js';
 const $=id=>document.getElementById(id);
-const world=new GameWorld($('gameCanvas'));
+let world=null;
+try{world=new GameWorld($('gameCanvas'));}
+catch(error){
+ $('welcomeError').textContent='このブラウザでWebGLが利用できません。ChromeやSafariで3D描画を有効にしてください。';
+ $('createRoom').disabled=true;$('joinRoom').disabled=true;
+ console.warn('WebGL unavailable:',error.message);
+}
+if(world){
 let socket=null, myId=null, currentCode='',state={parts:[],players:[],npcs:[],joints:[],wires:[]};
 let shape='box',mode='select', selected=new Set(),selectedNpc=null,drawPoints=[],pointer=null,chosenColor='#68d8fd',lastDragSend=0,lastUI=0,lastTouch=0;
 let pendingExport='download';
@@ -283,3 +290,5 @@ setInterval(()=>{
  send({type:'input',x,z,jump:k.has('Space')||controls.jump,sprint:k.has('ShiftLeft')||k.has('ShiftRight'),look:yaw});
 },50);
 message('','ようこそ！ルームを作るか招待コードで参加しましょう。',true);
+
+}
