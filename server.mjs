@@ -168,6 +168,7 @@ function onMessage(ws,raw) {
     p.look=safeNumber(m.look,p.look);return;
   }
   if(m.type==='chat') {if(!mayAct(p,2))return;const s=String(m.message||'').replace(/[<>\x00-\x1f]/g,'').slice(0,130);if(s)cast(r,{type:'chat',id:p.id,name:p.name,message:s});return;}
+  if(m.type==='export')return send(ws,{type:'export',snapshot:takeSnapshot(r)});
   if(!mayAct(p,15))return;
   if(m.type==='spawn'){
     const at=V(clamp(safeNumber(m.x,0),-WORLD_SIZE,WORLD_SIZE),clamp(safeNumber(m.y,3),.5,40),clamp(safeNumber(m.z,0),-WORLD_SIZE,WORLD_SIZE));
@@ -285,7 +286,6 @@ function onMessage(ws,raw) {
     if(m.paused!==undefined)r.paused=!!m.paused;
     return;
   }
-  if(m.type==='export')return send(ws,{type:'export',snapshot:takeSnapshot(r)});
   if(m.type==='import'){
     if(p.id!==r.host)return err(ws,'ホストのみワールドを読み込めます');
     try{loadSnapshot(r,m.snapshot,p.id);cast(r,{type:'notice',message:'ワールドを読み込みました'});}
